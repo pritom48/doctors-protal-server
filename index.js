@@ -19,6 +19,7 @@ async function run() {
     try {
         await client.connect();
         const serviceCollection = client.db('doctors_protal').collection('services')
+        const bookingCollection = client.db('doctors_protal').collection('bookings')
 
         app.get('/service', async (req, res) => {
             const query = {};
@@ -26,6 +27,25 @@ async function run() {
             const services = await cursor.toArray();
             res.send(services)
         })
+
+        app.get('/booking', async (req, res) => {
+            const patient = req.query.patient;
+            const query = { patient: patient };
+            const bookings = await bookingCollection.find(query).toArray();
+            res.send(bookings)
+        })
+
+        app.post('/booking', async (req, res) => {
+            const booking = req.body;
+            const query = { treatment: booking.treatment, date: booking.date, patient: booking.patient };
+            const exists = await bookingCollection.findOne(query);
+            if (exists) {
+                return res.send({ success: false, booking: exists })
+            }
+            const result = await bookingCollection.insertOne(booking);
+            res.send({ success: true, result })
+        })
+
 
     }
     finally {
